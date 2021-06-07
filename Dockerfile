@@ -1,4 +1,4 @@
-FROM joined-docker.artifactory.danskenet.net/baseimages/mcr.microsoft.com/dotnet/core/aspnet:3.1-with-db-certs
+FROM mcr.microsoft.com/dotnet/aspnet:3.1
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://*:8080
 WORKDIR /app
