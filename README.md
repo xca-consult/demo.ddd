@@ -31,15 +31,13 @@ There is a few prerequisites that needs to be in place before you can run the ap
 Code management, contributions, pull requests and deployment is all managed in <a href="https://azuredevops.danskenet.net/Main/ITI%20Design%20and%20Implementation/_git/ITI.Samples.DDD.Dotnet" target="_blank">Azure Devops</a>.
 
 ## Security
-When testing the application through Swagger, you can acquire an accesstoken here:
-<a href="https://security-sales-fsdc-syst.paas-dblan.danskenet.net/Home/Login" target="_blank">Ariane.Security</a>.
-
+When testing the application through Swagger, you can acquire an accesstoken from eg. Google.
 
 In automated system tests, running in pipeline we do not validate lifetime, so we can do with a hard coded token.
 
 Before interacting with the API, be sure to either
 - Change the needed read and write scopes to match your AD groups (by changing the value of the ADGroup property in the **ReadPolicy** and **WritePolicy** classes)
-- Acquire the AD group **fN-CLD-YZYZ-00-00** 
+- Acquire the AD group **XXX-XXX** (make something up that suits your identity provider) 
 
 ## Database
 We use DbUp to handle automatic migration of the database. This runs at application startup.
