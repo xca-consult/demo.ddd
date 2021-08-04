@@ -28,8 +28,6 @@ There is a few prerequisites that needs to be in place before you can run the ap
 	- Make sure to have TCP/IP enabled in the SQL server Configuration manager
 - Have Docker running on your machine for automated testing
 
-Code management, contributions, pull requests and deployment is all managed in <a href="https://azuredevops.danskenet.net/Main/ITI%20Design%20and%20Implementation/_git/ITI.Samples.DDD.Dotnet" target="_blank">Azure Devops</a>.
-
 ## Security
 When testing the application through Swagger, you can acquire an accesstoken from eg. Google.
 
