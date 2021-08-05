@@ -13,8 +13,7 @@
 
         public string GetConnectionString()
         {
-            var security = IntegratedSecurity ? "Integrated Security=True;" : $"User Id={UserId};Password={Password};";
-            return $"Data Source={DataSource},{Port};Initial Catalog={InitialCatalog};{security}Pooling={Pooling};MultiSubnetFailover={MultiSubnetFailover}";
+            return $"Data Source={DataSource},{Port};Initial Catalog={InitialCatalog};User Id={UserId};Password={Password};Pooling={Pooling};MultiSubnetFailover={MultiSubnetFailover}";
         }
     }
 }
