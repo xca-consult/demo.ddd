@@ -22,8 +22,7 @@ namespace Demo.DDD.SystemTests
         {
             var testContainersBuilder = new TestcontainersBuilder<MsSqlTestcontainer>()
                 .WithDatabase(
-                    new MsSqlTestcontainerConfiguration("joined-docker.artifactory.danskenet.net/mssql/server:2019-latest")
-                    //new MsSqlTestcontainerConfiguration()
+                    new MsSqlTestcontainerConfiguration
                     {
                         Password = "StrongPassword1"
                     });
