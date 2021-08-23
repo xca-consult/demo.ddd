@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Demo.DDD.SystemTests
+namespace Demo.DDD.SystemTests.Setup
 {
     public class ApplicationFixture : IDisposable
     {
@@ -35,6 +35,15 @@ namespace Demo.DDD.SystemTests
                 {
                     services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
                     {
+                        /* offline jwtvalidation in tests
+                        var x509Certificate2 = new X509Certificate2(Encoding.UTF8.GetBytes(SecurityConfigurationProvider.IssuerSigningKey));
+                        var secKey = new X509SecurityKey(x509Certificate2);
+
+                        options.ConfigurationManager = new ConfigurationManager<OpenIdConnectConfiguration>("not-used",
+                                new OfflineOpenIdConnectConfigurationRetriever(), HttpClient); 
+                        options.TokenValidationParameters.IssuerSigningKey = secKey;
+                        */
+
                         options.TokenValidationParameters.ValidateLifetime = false;
                     });
                 });

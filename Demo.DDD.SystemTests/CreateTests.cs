@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using Demo.DDD.SystemTests.Setup;
+using Xunit;
 
 namespace Demo.DDD.SystemTests
 {

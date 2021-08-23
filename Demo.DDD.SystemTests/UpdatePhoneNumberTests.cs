@@ -2,6 +2,7 @@
 using System.Net;
 using Xunit;
 using Demo.DDD.ApplicationServices.ReadModels;
+using Demo.DDD.SystemTests.Setup;
 
 namespace Demo.DDD.SystemTests
 {
