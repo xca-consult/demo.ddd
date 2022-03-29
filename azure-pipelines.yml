@@ -1,0 +1,134 @@
+variables:
+  projectFolder: 'Demo DDD'
+  dockerImageName: ${{ lower(variables['projectFolder']) }}
+  buildConfiguration: 'Release'
+  disable.coverage.autogenerate: 'true'
+  ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    buildNumberPostfix: '-hotfix'
+  ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
+    buildNumberPostfix: ''
+
+name: $(Year:yyyy).$(Month).$(DayOfMonth)$(rev:-r)$(buildNumberPostfix)
+
+trigger:
+  branches:
+    include:
+    - master
+  
+resources:
+  repositories: 
+    - repository: Build
+      type: git
+
+stages:
+- stage: Build
+  jobs:
+  - job:
+    displayName: Build .NET Core service
+    pool:
+      name: Core Linux
+    variables:
+      project: '**/*.csproj'
+      testProject: '**/Test/Test.csproj'
+      systemTestProject: '**/SystemTest/SystemTest.csproj'
+    steps:
+    - checkout: self
+      persistCredentials: true
+    - task: UseDotNet@2
+      inputs:
+        version: '6.0.x'
+        includePreviewVersions: true
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore'
+      inputs:
+        command: 'restore'
+        projects: '$(project)'
+        feedsToUse: 'config'
+        nugetConfigPath: 'nuget.config'
+    - bash: |
+        echo "$(Build.BuildNumber)" >| Main/Versionfile
+      displayName: 'Write version to file'
+    - task: DotNetCoreCLI@2
+      displayName: 'Build $(buildConfiguration)'
+      inputs:
+        command: 'build'
+        projects: '$(project)'
+        arguments: '--configuration $(buildConfiguration)'
+    - bash: |
+        rm -rf $(Build.SourcesDirectory)/coverage
+      displayName: 'Clear code coverage reports'
+    - task: DotNetCoreCLI@2
+      displayName: 'Test (Unit + Component)'
+      inputs:
+        command: test
+        projects: '$(testProject)'
+        arguments: '--configuration $(BuildConfiguration) --filter Category=Unit --logger "trx;LogFileName=TEST-unit.xml" --collect:"XPlat Code Coverage" -r $(Agent.TempDirectory)/coverage --settings $(Build.SourcesDirectory)/coverlet.runsettings'
+        publishTestResults: false
+    - task: Bash@3
+      displayName: 'docker-compose start'
+      inputs:
+        targetType: filePath
+        filePath: ./SystemTest/Compose/startup.sh
+        workingDirectory: SystemTest/Compose
+    - task: DotNetCoreCLI@2
+      displayName: 'Test (System)'
+      inputs:
+        command: test
+        projects: '$(systemTestProject)'
+        arguments: '--configuration $(BuildConfiguration) --filter Category=System --logger "trx;LogFileName=TEST-system.xml" --collect:"XPlat Code Coverage" -r $(Agent.TempDirectory)/coverage --settings $(Build.SourcesDirectory)/coverlet.runsettings'
+        publishTestResults: false
+    - task: Bash@3
+      displayName: 'docker-compose clean'
+      inputs:
+        targetType: filePath
+        filePath: ./SystemTest/Compose/clean.sh
+        workingDirectory: SystemTest/Compose
+      condition: always()
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      inputs:
+        testResultsFormat: VSTest
+        mergeTestResults: true
+        testRunTitle: '$(projectFolder):$(Build.BuildNumber)'
+        testResultsFiles: '$(Agent.TempDirectory)/coverage/**/TEST-*.xml' 
+    - task: DotNetCoreCLI@2
+      displayName: Publish service
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: '$(project)'
+        arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
+        zipAfterPublish: false
+        modifyOutputPath: false
+    - publish: $(build.artifactstagingdirectory)
+      artifact: service
+    - script: |
+        git tag $(Build.BuildNumber)
+        git push --tags
+      workingDirectory: $(Build.SourcesDirectory)
+      displayName: 'Git Commit and Tag from pipeline'
+- stage: Docker
+  dependsOn: Build
+  jobs:
+  - job:
+    displayName: Build + publish docker image
+    pool:
+      name: Core Linux
+    steps:
+    - download: current
+      artifact: service
+    - checkout: Build
+    - task: Docker@2
+      displayName: Docker build and push
+      inputs:
+        containerRegistry: 'OK Container Registry'
+        repository: '$(dockerImageName)'
+        command: 'buildAndPush'
+        Dockerfile: '$(Pipeline.Workspace)/service/Dockerfile'
+        tags: |
+          $(Build.BuildNumber)
+          latest
+    - bash: |
+        chmod +x $(Build.SourcesDirectory)/docker-clean.sh
+        $(Build.SourcesDirectory)/docker-clean.sh
+      displayName: "Docker clean"
